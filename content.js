@@ -136,11 +136,14 @@ function scrapeOrders() {
             }
 
             if (!orderInfo.orderStatus) {
-                // "delivered" (past tense) = arrived. "Arriving ..." = still in transit = Not Yet Arrived.
-                const cardText = card.textContent.toLowerCase();
-                const isDelivered = cardText.includes('delivered');
+                // Read status from the dedicated element to avoid false matches like "Auto-delivered".
+                const deliveryPrimaryEl = card.querySelector('.delivery-box__primary-text');
+                const deliveryText = deliveryPrimaryEl ? deliveryPrimaryEl.textContent.trim().toLowerCase() : '';
+                // "Arriving ..." / "Preparing ..." = in transit. No delivery box = order just placed.
+                const isInTransit = deliveryText.includes('arriving') || deliveryText.includes('preparing');
+                const isDelivered = deliveryText.includes('delivered');
                 const hasReturnInfo = orderInfo.returnDate !== 'N/A';
-                if (!isDelivered && !hasReturnInfo) {
+                if (isInTransit || (!isDelivered && !hasReturnInfo)) {
                     orderInfo.orderStatus = 'Not Yet Arrived';
                 }
             }
