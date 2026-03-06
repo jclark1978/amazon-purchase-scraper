@@ -128,8 +128,11 @@ function scrapeOrders() {
                 'h4.od-status-message span.a-text-bold, ' +
                 'h4.a-color-base.od-status-message span.a-text-bold'
             );
-            if (refundEl && refundEl.textContent.trim().toLowerCase().includes('refund')) {
-                orderInfo.orderStatus = 'Refunded';
+            if (refundEl) {
+                const statusText = refundEl.textContent.trim().toLowerCase();
+                if (statusText.includes('refund') || statusText.includes('return complete')) {
+                    orderInfo.orderStatus = 'Refunded';
+                }
             }
 
             if (!orderInfo.orderStatus) {
