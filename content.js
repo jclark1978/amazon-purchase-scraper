@@ -23,7 +23,7 @@ function scrapeOrders() {
 
     orderCards.forEach(card => {
         try {
-            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', link: '', returnEligible: 'No', returnDate: 'N/A' };
+            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', asins: '', link: '', returnEligible: 'No', returnDate: 'N/A' };
 
             // 1. Order ID
             const orderIdMatch = card.innerHTML.match(/\d{3}-\d{7}-\d{7}/);
@@ -94,8 +94,9 @@ function scrapeOrders() {
                 }
             }
 
-            // 3. Items
+            // 3. Items + ASINs
             const items = [];
+            const asins = [];
             const itemLinks = card.querySelectorAll('a.a-link-normal[href*="/product/"], a.a-link-normal[href*="/dp/"]');
             const seenItems = new Set();
             itemLinks.forEach(link => {
@@ -104,9 +105,12 @@ function scrapeOrders() {
                 if (title && title.length > 5 && !seenItems.has(title)) {
                     seenItems.add(title);
                     items.push(title);
+                    const asinMatch = link.href.match(/\/(?:dp|product)\/([A-Z0-9]{10})/i);
+                    if (asinMatch) asins.push(asinMatch[1].toUpperCase());
                 }
             });
             orderInfo.items = items.join(' | ');
+            orderInfo.asins = asins.join(' | ');
 
             // 4. Link
             const detailsLink = card.querySelector('a[href*="order-details"]');

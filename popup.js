@@ -72,30 +72,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    function parseDateToFormattedString(dateStr) {
+        if (!dateStr || dateStr === 'N/A') return dateStr;
+        const parsedDate = new Date(dateStr);
+        if (isNaN(parsedDate)) return dateStr;
+        const mm = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(parsedDate.getDate()).padStart(2, '0');
+        const yyyy = parsedDate.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+    }
+
+    function computeDaysUntilDeadline(returnDateStr) {
+        if (!returnDateStr || returnDateStr === 'N/A') return '';
+        const returnDate = new Date(returnDateStr);
+        if (isNaN(returnDate)) return '';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        returnDate.setHours(0, 0, 0, 0);
+        return Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function computeStatus(returnEligible, returnDateStr) {
+        if (returnEligible === 'Yes') {
+            const days = computeDaysUntilDeadline(returnDateStr);
+            if (days === '') return 'Unknown';
+            if (days <= 7) return 'Urgent - Return Soon';
+            return 'Eligible';
+        } else if (returnDateStr && returnDateStr !== 'N/A') {
+            return 'Window Closed';
+        }
+        return 'Unknown';
+    }
+
     async function downloadXLSX(data) {
         if (!data || !data.length) return;
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Amazon Orders');
 
-        // Define columns and widths
-        worksheet.columns = [
-            { header: 'Order Date', key: 'date', width: 15 },
-            { header: 'Order Total', key: 'total', width: 15 },
-            { header: 'Order Number', key: 'orderId', width: 22 },
-            { header: 'Items', key: 'items', width: 60 },
-            { header: 'Order Link', key: 'link', width: 50 },
-            { header: 'Return Eligible', key: 'returnEligible', width: 15 },
-            { header: 'Return Date', key: 'returnDate', width: 15 },
-            { header: 'Notes', key: 'notes', width: 30 }
-        ];
-
-        // Style the header row manually isn't needed if we use a Table, but we need the raw rows
         const rawRows = data.map(row => [
+            computeStatus(row.returnEligible, row.returnDate),
+            computeDaysUntilDeadline(row.returnDate),
             parseDateToFormattedString(row.date),
             row.total,
             row.orderId,
             row.items,
+            row.asins || '',
             row.link ? { text: row.link, hyperlink: row.link, tooltip: row.link } : '',
             row.returnEligible,
             parseDateToFormattedString(row.returnDate),
@@ -112,10 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 showRowStripes: true,
             },
             columns: [
+                { name: 'Status' },
+                { name: 'Days Until Deadline' },
                 { name: 'Order Date' },
                 { name: 'Order Total' },
                 { name: 'Order Number' },
                 { name: 'Items' },
+                { name: 'ASINs' },
                 { name: 'Order Link' },
                 { name: 'Return Eligible' },
                 { name: 'Return Date' },
@@ -124,10 +149,24 @@ document.addEventListener('DOMContentLoaded', () => {
             rows: rawRows
         });
 
-        // The addTable method doesn't auto-apply column widths, so we still set them
-        worksheet.columns.forEach((col, i) => {
-            const widths = [15, 15, 22, 60, 50, 15, 15, 30];
-            col.width = widths[i];
+        // Column widths
+        const widths = [18, 20, 15, 15, 22, 60, 30, 50, 15, 15, 30];
+        worksheet.columns.forEach((col, i) => { col.width = widths[i]; });
+
+        // Color-code the Status column (col A = index 1)
+        data.forEach((row, i) => {
+            const cell = worksheet.getCell(i + 2, 1); // +2: row 1 is header
+            const status = computeStatus(row.returnEligible, row.returnDate);
+            if (status === 'Eligible') {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+                cell.font = { color: { argb: 'FF276221' }, bold: true };
+            } else if (status === 'Urgent - Return Soon') {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEB9C' } };
+                cell.font = { color: { argb: 'FF9C5700' }, bold: true };
+            } else if (status === 'Window Closed') {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
+                cell.font = { color: { argb: 'FF9C0006' }, bold: true };
+            }
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
