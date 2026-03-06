@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             row.orderId,
             row.items,
             row.asins || '',
+            row.shipTo || '',
             row.link ? { text: row.link, hyperlink: row.link, tooltip: row.link } : '',
             row.returnEligible,
             parseDateToFormattedString(row.returnDate),
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { name: 'Order Number' },
                 { name: 'Items' },
                 { name: 'ASINs' },
+                { name: 'Ship To' },
                 { name: 'Order Link' },
                 { name: 'Return Eligible' },
                 { name: 'Return Date' },
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Column widths
-        const widths = [18, 20, 15, 15, 22, 60, 30, 50, 15, 15, 30];
+        const widths = [18, 20, 15, 15, 22, 60, 30, 20, 50, 15, 15, 30];
         worksheet.columns.forEach((col, i) => { col.width = widths[i]; });
 
         // Color-code the Status column (col A = index 1)

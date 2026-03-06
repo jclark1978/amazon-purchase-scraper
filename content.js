@@ -23,7 +23,7 @@ function scrapeOrders() {
 
     orderCards.forEach(card => {
         try {
-            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', asins: '', link: '', returnEligible: 'No', returnDate: 'N/A', orderStatus: '' };
+            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', asins: '', shipTo: '', link: '', returnEligible: 'No', returnDate: 'N/A', orderStatus: '' };
 
             // 1. Order ID
             const orderIdMatch = card.innerHTML.match(/\d{3}-\d{7}-\d{7}/);
@@ -112,7 +112,15 @@ function scrapeOrders() {
             orderInfo.items = items.join(' | ');
             orderInfo.asins = asins.join(' | ');
 
-            // 4. Link
+            // 4. Ship To
+            const shipToEl = card.querySelector('.yohtmlc-recipient .insert-encrypted-trigger-text');
+            if (shipToEl) {
+                // textContent includes the <i> icon node; grab only the first text node
+                const textNode = [...shipToEl.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+                orderInfo.shipTo = textNode ? textNode.textContent.trim() : shipToEl.textContent.trim();
+            }
+
+            // 5. Link
             const detailsLink = card.querySelector('a[href*="order-details"]');
             if (detailsLink) {
                 orderInfo.link = detailsLink.href;
