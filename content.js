@@ -121,17 +121,21 @@ function scrapeOrders() {
             }
 
             // 5. Order Status (Refunded, Not Yet Arrived)
-            const refundEl = card.querySelector('h4.od-status-message span.a-text-bold, h4.a-color-base.od-status-message span.a-text-bold');
+            // Selector covers both newer layout (span.delivery-box__primary-text) and older h4 layout
+            const refundEl = card.querySelector(
+                'span.delivery-box__primary-text.a-text-bold, ' +
+                '.yohtmlc-shipment-status-primaryText span.a-text-bold, ' +
+                'h4.od-status-message span.a-text-bold, ' +
+                'h4.a-color-base.od-status-message span.a-text-bold'
+            );
             if (refundEl && refundEl.textContent.trim().toLowerCase().includes('refund')) {
                 orderInfo.orderStatus = 'Refunded';
             }
 
             if (!orderInfo.orderStatus) {
-                // Once delivered, Amazon shows a return window or "Return window closed".
-                // If neither exists, the item hasn't arrived yet.
-                // Also check for in-transit delivery language as a safeguard.
+                // "delivered" (past tense) = arrived. "Arriving ..." = still in transit = Not Yet Arrived.
                 const cardText = card.textContent.toLowerCase();
-                const isDelivered = cardText.includes('delivered') || cardText.includes('arriving');
+                const isDelivered = cardText.includes('delivered');
                 const hasReturnInfo = orderInfo.returnDate !== 'N/A';
                 if (!isDelivered && !hasReturnInfo) {
                     orderInfo.orderStatus = 'Not Yet Arrived';
