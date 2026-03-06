@@ -127,14 +127,15 @@ function scrapeOrders() {
             }
 
             if (!orderInfo.orderStatus) {
-                // Delivery status rows use .a-size-mini with .a-text-caps spans
-                // "Order placed" here means ordered but not yet shipped/arrived
-                const miniRows = card.querySelectorAll('.a-row.a-size-mini');
-                miniRows.forEach(row => {
-                    const capsSpan = row.querySelector('span.a-text-caps, span.a-color-secondary.a-text-caps');
-                    if (capsSpan && capsSpan.textContent.trim().toLowerCase() === 'order placed') {
-                        orderInfo.orderStatus = 'Not Yet Arrived';
-                    }
+                // "Order placed" also appears as the order date label in the header — exclude those.
+                // Only match spans in the shipment/delivery section, not the order header.
+                const capsSpans = card.querySelectorAll('span.a-text-caps, span.a-color-secondary.a-text-caps');
+                capsSpans.forEach(span => {
+                    if (span.textContent.trim().toLowerCase() !== 'order placed') return;
+                    if (span.closest('.order-header__header-list-item') ||
+                        span.closest('.yohtmlc-order-header') ||
+                        span.closest('.order-header')) return;
+                    orderInfo.orderStatus = 'Not Yet Arrived';
                 });
             }
 
