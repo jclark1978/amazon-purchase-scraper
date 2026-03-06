@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Amazon Purchase Scraper",
+    "version": "1.0",
+    "description": "Scrapes Amazon purchase history from the current orders page.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "downloads",
+        "storage"
+    ],
+    "host_permissions": [
+        "*://*.amazon.com/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.amazon.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    }
+}
