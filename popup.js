@@ -92,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
     }
 
-    function computeStatus(returnEligible, returnDateStr) {
+    function computeStatus(returnEligible, returnDateStr, orderStatus) {
+        if (orderStatus === 'Refunded') return 'Returned';
+        if (orderStatus === 'Not Yet Arrived') return 'Not Yet Arrived';
         if (returnEligible === 'Yes') {
             const days = computeDaysUntilDeadline(returnDateStr);
             if (days === '') return 'Unknown';
@@ -111,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const worksheet = workbook.addWorksheet('Amazon Orders');
 
         const rawRows = data.map(row => [
-            computeStatus(row.returnEligible, row.returnDate),
+            computeStatus(row.returnEligible, row.returnDate, row.orderStatus || ''),
             computeDaysUntilDeadline(row.returnDate),
             parseDateToFormattedString(row.date),
             row.total,
@@ -156,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Color-code the Status column (col A = index 1)
         data.forEach((row, i) => {
             const cell = worksheet.getCell(i + 2, 1); // +2: row 1 is header
-            const status = computeStatus(row.returnEligible, row.returnDate);
+            const status = computeStatus(row.returnEligible, row.returnDate, row.orderStatus || '');
             if (status === 'Eligible') {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
                 cell.font = { color: { argb: 'FF276221' }, bold: true };
@@ -166,6 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (status === 'Window Closed') {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
                 cell.font = { color: { argb: 'FF9C0006' }, bold: true };
+            } else if (status === 'Returned') {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+                cell.font = { color: { argb: 'FF595959' }, bold: true };
+            } else if (status === 'Not Yet Arrived') {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDAE8FC' } };
+                cell.font = { color: { argb: 'FF1F4E79' }, bold: true };
             }
         });
 

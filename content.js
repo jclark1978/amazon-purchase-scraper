@@ -23,7 +23,7 @@ function scrapeOrders() {
 
     orderCards.forEach(card => {
         try {
-            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', asins: '', link: '', returnEligible: 'No', returnDate: 'N/A' };
+            const orderInfo = { date: 'N/A', total: 'N/A', orderId: 'N/A', items: '', asins: '', link: '', returnEligible: 'No', returnDate: 'N/A', orderStatus: '' };
 
             // 1. Order ID
             const orderIdMatch = card.innerHTML.match(/\d{3}-\d{7}-\d{7}/);
@@ -120,7 +120,25 @@ function scrapeOrders() {
                 orderInfo.link = `https://www.amazon.com/gp/your-account/order-details?orderID=${orderInfo.orderId}`;
             }
 
-            // 5. Return Eligibility
+            // 5. Order Status (Refunded, Not Yet Arrived)
+            const refundEl = card.querySelector('h4.od-status-message span.a-text-bold, h4.a-color-base.od-status-message span.a-text-bold');
+            if (refundEl && refundEl.textContent.trim().toLowerCase().includes('refund')) {
+                orderInfo.orderStatus = 'Refunded';
+            }
+
+            if (!orderInfo.orderStatus) {
+                // Delivery status rows use .a-size-mini with .a-text-caps spans
+                // "Order placed" here means ordered but not yet shipped/arrived
+                const miniRows = card.querySelectorAll('.a-row.a-size-mini');
+                miniRows.forEach(row => {
+                    const capsSpan = row.querySelector('span.a-text-caps, span.a-color-secondary.a-text-caps');
+                    if (capsSpan && capsSpan.textContent.trim().toLowerCase() === 'order placed') {
+                        orderInfo.orderStatus = 'Not Yet Arrived';
+                    }
+                });
+            }
+
+            // 6. Return Eligibility
             const returnSpans = card.querySelectorAll('span.a-size-small');
             returnSpans.forEach(span => {
                 const text = span.textContent.trim();
