@@ -13,6 +13,7 @@ A Chrome extension that scrapes your Amazon order history and exports it to an X
 | Order Number | Amazon order ID |
 | Items | Pipe-delimited list of product titles |
 | ASINs | Pipe-delimited list of Amazon ASINs |
+| Ship To | Recipient name on the order |
 | Order Link | Clickable link to the order detail page |
 | Return Eligible | Yes / No |
 | Return Date | Return window open/close date |
