@@ -127,16 +127,15 @@ function scrapeOrders() {
             }
 
             if (!orderInfo.orderStatus) {
-                // "Order placed" also appears as the order date label in the header — exclude those.
-                // Only match spans in the shipment/delivery section, not the order header.
-                const capsSpans = card.querySelectorAll('span.a-text-caps, span.a-color-secondary.a-text-caps');
-                capsSpans.forEach(span => {
-                    if (span.textContent.trim().toLowerCase() !== 'order placed') return;
-                    if (span.closest('.order-header__header-list-item') ||
-                        span.closest('.yohtmlc-order-header') ||
-                        span.closest('.order-header')) return;
+                // Once delivered, Amazon shows a return window or "Return window closed".
+                // If neither exists, the item hasn't arrived yet.
+                // Also check for in-transit delivery language as a safeguard.
+                const cardText = card.textContent.toLowerCase();
+                const isDelivered = cardText.includes('delivered') || cardText.includes('arriving');
+                const hasReturnInfo = orderInfo.returnDate !== 'N/A';
+                if (!isDelivered && !hasReturnInfo) {
                     orderInfo.orderStatus = 'Not Yet Arrived';
-                });
+                }
             }
 
             // 6. Return Eligibility
